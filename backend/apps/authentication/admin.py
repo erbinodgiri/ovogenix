@@ -2,11 +2,12 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User
 
+@admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ('username', 'email', 'role', 'is_staff', 'is_active')
+    list_display = ('username', 'email', 'role', 'is_staff', 'is_active', 'date_joined')
     list_filter = ('role', 'is_staff', 'is_active')
     search_fields = ('username', 'email')
-    ordering = ('username',)
+    ordering = ('-date_joined',)
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('Personal Info', {'fields': ('email',)}),
@@ -16,9 +17,7 @@ class UserAdmin(BaseUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'email', 'password1', 'password2', 'role'),
+            'fields': ('username', 'email', 'password1', 'password2', 'role', 'is_staff', 'is_active'),
         }),
     )
-
-admin.site.register(User, UserAdmin)
-# No need to unregister/register Group; django.contrib.auth handles it
+    filter_horizontal = ('groups', 'user_permissions')
