@@ -1,18 +1,12 @@
+# backend/apps/alerts/models.py
 from django.db import models
 from apps.devices.models import Device
 
 class Alert(models.Model):
-    ALERT_TYPES = (
-        ('temperature', 'Temperature Anomaly'),
-        ('humidity', 'Humidity Anomaly'),
-        ('turning', 'Turning Issue'),
-        ('discrepancy', 'Data Discrepancy'),
-    )
     device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name='alerts')
-    alert_type = models.CharField(max_length=20, choices=ALERT_TYPES)
+    type = models.CharField(max_length=50)
     message = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    resolved = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.device.name} - {self.alert_type}"
+        return f"{self.type} - {self.device.device_id}"

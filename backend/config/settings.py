@@ -6,12 +6,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'web']  # Added 'web' for Docker
 
 INSTALLED_APPS = [
     'django_celery_beat',
     'django.contrib.admin',
-    'django.contrib.auth',  # Add this back
+    'django.contrib.auth',
     'colorfield',
     'admin_interface',
     'django.contrib.contenttypes',
@@ -22,7 +22,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'channels',
     'corsheaders',
-    'apps.authentication.apps.AuthenticationConfig',  # Use only this
+    'apps.authentication.apps.AuthenticationConfig',
     'apps.devices.apps.DevicesConfig',
     'apps.sensor_data.apps.SensorDataConfig',
     'apps.alerts.apps.AlertsConfig',
@@ -31,7 +31,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # Add this at the top
+    'corsheaders.middleware.CorsMiddleware',  # Top for CORS
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -81,7 +81,8 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'static'  # For collectstatic in production
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -92,10 +93,10 @@ REST_FRAMEWORK = {
 }
 
 CHANNEL_LAYERS = {
-    'default': {
+    'default': {  # Updated to 'default' for consistency
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [config('REDIS_URL')],
+            "hosts": [("redis", 6379)],
         },
     },
 }
@@ -116,5 +117,6 @@ ADMIN_INDEX_TITLE = "Welcome to Ovogenix Admin Panel"
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:8000',
+    'http://localhost:5173',  # Added for frontend
     'http://localhost',
 ]

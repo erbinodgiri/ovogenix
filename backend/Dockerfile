@@ -1,25 +1,18 @@
-# Use official Python runtime as a parent image
 FROM python:3.9-slim
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
+# Create a non-root user
+RUN useradd -m -u 1000 appuser && chown appuser:appuser /app
 
-# Copy requirements file
+# Install dependencies
+RUN apt-get update && apt-get install -y gcc libpq-dev && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
-
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
 COPY . .
 
-# Expose port 8000 for Django
-EXPOSE 8000
+# Switch to non-root user
+USER appuser
 
-# Default command (can be overridden in docker-compose.yml)
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
