@@ -1,0 +1,16 @@
+# Python/Django
+__pycache__/
+*.py[cod]
+*.sqlite3
+venv/
+*.log
+
+# Docker
+*.env
+
+# VS Code
+.vscode/
+
+# Frontend build (if added later)
+node_modules/
+dist/

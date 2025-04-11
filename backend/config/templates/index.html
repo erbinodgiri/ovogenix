@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ovogenix - Hatchery Monitoring</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+  <div id="root" class="w-full max-w-4xl p-4"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const API_BASE_URL = 'http://localhost:8000/api/';
+
+    const App = () => {
+      const [token, setToken] = useState(localStorage.getItem('token') || '');
+      const [username, setUsername] = useState('');
+      const [password, setPassword] = useState('');
+      const [alerts, setAlerts] = useState([]);
+      const [error, setError] = useState('');
+
+      useEffect(() => {
+        if (token) {
+          console.log('Token:', token);  // Debug token
+          fetchAlerts();
+        }
+      }, [token]);
+
+      const fetchAlerts = async () => {
+        try {
+          const response = await axios.get(`${API_BASE_URL}alerts/`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          console.log('Alerts Response:', response.data);  // Debug response
+          setAlerts(response.data);
+          setError('');
+        } catch (err) {
+          console.error('Fetch Alerts Error:', err.response || err);  // Debug error
+          setError('Failed to fetch alerts. Please log in again.');
+          setToken('');
+          localStorage.removeItem('token');
+        }
+      };
+
+      const handleLogin = async () => {
+        try {
+          const response = await axios.post(`${API_BASE_URL}token/`, {
+            username,
+            password,
+          });
+          const newToken = response.data.access;
+          console.log('Login Token:', newToken);  // Debug token
+          setToken(newToken);
+          localStorage.setItem('token', newToken);
+          setUsername('');
+          setPassword('');
+          setError('');
+        } catch (err) {
+          console.error('Login Error:', err.response || err);  // Debug error
+          setError('Login failed. Check your credentials.');
+        }
+      };
+
+      const handleLogout = () => {
+        setToken('');
+        localStorage.removeItem('token');
+        setAlerts([]);
+      };
+
+      const handleResolve = async (alertId) => {
+        try {
+          const response = await axios.post(
+            `${API_BASE_URL}alerts/${alertId}/resolve/`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          console.log('Resolve Response:', response.data);  // Debug resolve
+          setAlerts(alerts.map(alert =>
+            alert.id === alertId ? { ...alert, resolved: true } : alert
+          ));
+        } catch (err) {
+          console.error('Resolve Error:', err.response || err);  // Debug error
+          setError('Failed to resolve alert.');
+        }
+      };
+
+      return (
+        <div className="bg-white shadow-md rounded-lg p-6">
+          <h1 className="text-2xl font-bold text-center mb-4">Ovogenix Hatchery Monitoring</h1>
+
+          {!token ? (
+            <div className="space-y-4">
+              <input
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full p-2 border rounded"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-2 border rounded"
+              />
+              <button
+                onClick={handleLogin}
+                className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+              >
+                Login
+              </button>
+              {error && <p className="text-red-500 text-center">{error}</p>}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <button
+                onClick={handleLogout}
+                className="w-full bg-red-500 text-white p-2 rounded hover:bg-red-600"
+              >
+                Logout
+              </button>
+              <h2 className="text-xl font-semibold">Alerts</h2>
+              {alerts.length === 0 ? (
+                <p className="text-gray-500">No alerts found.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {alerts.map(alert => (
+                    <li
+                      key={alert.id}
+                      className={`p-4 rounded ${alert.resolved ? 'bg-green-100' : 'bg-yellow-100'}`}
+                    >
+                      <p><strong>Device:</strong> {alert.device}</p>
+                      <p><strong>Type:</strong> {alert.alert_type}</p>
+                      <p><strong>Message:</strong> {alert.message}</p>
+                      <p><strong>Created:</strong> {new Date(alert.created_at).toLocaleString()}</p>
+                      <p><strong>Resolved:</strong> {alert.resolved ? 'Yes' : 'No'}</p>
+                      {!alert.resolved && (
+                        <button
+                          onClick={() => handleResolve(alert.id)}
+                          className="mt-2 bg-green-500 text-white p-1 rounded hover:bg-green-600"
+                        >
+                          Resolve
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {error && <p className="text-red-500 text-center">{error}</p>}
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
